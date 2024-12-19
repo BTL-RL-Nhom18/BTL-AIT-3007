@@ -10,7 +10,7 @@ try:
 except ImportError:
     tqdm = lambda x, *args, **kwargs: x  # Fallback: tqdm becomes a no-op
 
-from evaluate.blue_policy import get_blue_policy
+from src.qmix.blue_policy import get_blue_policy
 
 def eval(args):
     max_cycles = 300
