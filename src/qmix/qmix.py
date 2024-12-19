@@ -8,7 +8,7 @@ from torch.distributions import Categorical
 import random
 import os
 
-from src.qmix.rewards import _calc_reward
+from rewards import _calc_reward
 from src.rnn_agent.rnn_agent import RNNAgent, ReplayBufferGRU
 from src.cnn import CNNFeatureExtractor
 

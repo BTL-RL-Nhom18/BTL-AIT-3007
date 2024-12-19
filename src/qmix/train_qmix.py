@@ -9,9 +9,9 @@ import os
 # Thêm thư mục gốc của project vào PYTHONPATH
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from src.qmix.qmix import QMix_Trainer, ReplayBuffer
+from qmix import QMix_Trainer, ReplayBuffer
 from src.cnn import CNNFeatureExtractor
-from src.qmix.utils import get_all_states, make_action
+from utils import get_all_states, make_action
 from src.torch_model import QNetwork
 
 # Thêm đoạn parse arguments trước khi định nghĩa các biến
