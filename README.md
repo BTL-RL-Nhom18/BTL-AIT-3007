@@ -11,17 +11,17 @@ Your agent's performance should be evaluated based on reward and win rate agains
 # Result
 My agent vs Random
 <p align="center">
-  <img src="assets/pretrained.gif" width="300" alt="My agent vs random agent" />
+  <img src="assets/vs_random.gif" width="300" alt="My agent vs random agent" />
 </p>
 
 My agent vs Red.pt agent
 <p align="center">
-  <img src="assets/blueselfplay.gif" width="300" alt="My agent vs red.pt agent" />
+  <img src="assets/vs_redpt.gif" width="300" alt="My agent vs red.pt agent" />
 </p>
 
 My agent vs Final Red Agent
 <p align="center">
-  <img src="assets/redselfplay.gif" width="300" alt="My agent vs final red agent" />
+  <img src="assets/vs_final_red.gif" width="300" alt="My agent vs final red agent" />
 </p>
 
 <h2 align="center">GGWP <3</h2>
