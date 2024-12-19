@@ -20,6 +20,7 @@ parser.add_argument('--epsilon_start', type=float, default=1.0, help='Starting e
 parser.add_argument('--epsilon_end', type=float, default=0.05, help='Minimum epsilon value')
 parser.add_argument('--epsilon_decay', type=float, default=0.985, help='Epsilon decay rate')
 parser.add_argument('--seed', type=int, default=42, help='random seed')
+parser.add_argument('--lambda_reward', type=float, default=0, help='Weight reward from enviroment')
 parser.add_argument('--checkpoint', type=str, default=None, help='Path to checkpoint')
 parser.add_argument('--model_path', type=str, default='model/qmix', help='Path to save model')
 parser.add_argument('--red_pretrained', action='store_true', help='Use red.pt pretrained model')
@@ -50,16 +51,32 @@ action_dim = env.action_space("blue_0").n
 action_shape = 1
 n_agents = len(env.agents)//2
 
-replay_buffer = ReplayBuffer(replay_buffer_size)
-learner = QMix_Trainer(
+# replay_buffer = ReplayBuffer(replay_buffer_size)
+# learner = QMix_Trainer(
+#     replay_buffer=replay_buffer,
+#     n_agents=n_agents,
+#     obs_dim=obs_dim,
+#     state_dim=state_dim,
+#     action_shape=action_shape,
+#     action_dim=action_dim,
+#     hidden_dim=hidden_dim,
+#     hypernet_dim=hypernet_dim,
+#     target_update_interval=target_update_interval,
+#     lr=args.learning_rate,
+#     epsilon_start=args.epsilon_start,
+#     epsilon_end=args.epsilon_end,
+#     epsilon_decay=args.epsilon_decay,
+#     lambda_reward=args.lambda_reward,
+# )
+
+replay_buffer = ReplayBufferGRU(replay_buffer_size)
+learner = RNN_Trainer(
     replay_buffer=replay_buffer,
     n_agents=n_agents,
     obs_dim=obs_dim,
-    state_dim=state_dim,
     action_shape=action_shape,
     action_dim=action_dim,
     hidden_dim=hidden_dim,
-    hypernet_dim=hypernet_dim,
     target_update_interval=target_update_interval,
     lr=args.learning_rate,
     epsilon_start=args.epsilon_start,
@@ -98,9 +115,9 @@ def train_blue_qmix(env, learner, max_episodes=1000, max_steps=200, batch_size=3
     """
     learner.agent.train()
     learner.target_agent.train()
-    learner.mixer.train()
-    learner.target_mixer.train()
-    loss, target_reward = None, None
+    # learner.mixer.train()
+    # learner.target_mixer.train()
+    loss, strategy_reward, env_reward, target_reward = None, None, None, None
     for episode in range(max_episodes):
         print(f"Start episode {episode} ----------------------")
         env.reset()
@@ -112,11 +129,12 @@ def train_blue_qmix(env, learner, max_episodes=1000, max_steps=200, batch_size=3
 
         # Initialize hidden states for all blue agents
         hidden_out = torch.zeros(1, 1, n_agents, hidden_dim).to(device)
+        # hidden_in = hidden_out.clone()
         
         # Lists to store episode data
         episode_observations = []
-        episode_states = []
-        episode_next_states = []
+        # episode_states = []
+        # episode_next_states = []
         episode_actions = []
         episode_rewards = []
         episode_next_observations = []
@@ -132,7 +150,7 @@ def train_blue_qmix(env, learner, max_episodes=1000, max_steps=200, batch_size=3
                 print("Environment truncated!!!")
                 break
             # Get all blue agents states and rewards
-            observations, state, rewards, terminations, truncations, infos = get_all_states(env, dead_agents)
+            observations, rewards, terminations, truncations, infos = get_all_states(env, dead_agents)
             if len(observations) == 0:  # No blue agents alive
                 break
             observations = np.stack(observations) # [n_agents, obs_dim]
@@ -155,8 +173,8 @@ def train_blue_qmix(env, learner, max_episodes=1000, max_steps=200, batch_size=3
             
             # Store transition
             episode_observations.append(observations)
-            episode_states.append(state)
-            episode_next_states.append(next_state)
+            # episode_states.append(state)
+            # episode_next_states.append(next_state)
             episode_actions.append(actions)
             episode_rewards.append(rewards)
             episode_next_observations.append(next_observations)
@@ -169,15 +187,25 @@ def train_blue_qmix(env, learner, max_episodes=1000, max_steps=200, batch_size=3
         # print(np.stack(episode_next_states).shape) #(1000, 81, 845)
 
         # Push entire episode to replay buffer
-        episode_states = np.stack(episode_states)
-        episode_next_states = np.stack(episode_next_states)
+        # episode_states = np.stack(episode_states)
+        # episode_next_states = np.stack(episode_next_states)
+        # if len(episode_observations) > 0:
+        #     learner.push_replay_buffer(
+        #         ini_hidden_in=ini_hidden_in,
+        #         ini_hidden_out=ini_hidden_out,
+        #         episode_observation=episode_observations,
+        #         episode_state=episode_states,
+        #         episode_next_state=episode_next_states,
+        #         episode_action=episode_actions,
+        #         episode_reward=episode_rewards,
+        #         episode_next_observation=episode_next_observations
+        #     )
+        
         if len(episode_observations) > 0:
             learner.push_replay_buffer(
                 ini_hidden_in=ini_hidden_in,
                 ini_hidden_out=ini_hidden_out,
                 episode_observation=episode_observations,
-                episode_state=episode_states,
-                episode_next_state=episode_next_states,
                 episode_action=episode_actions,
                 episode_reward=episode_rewards,
                 episode_next_observation=episode_next_observations
@@ -190,13 +218,13 @@ def train_blue_qmix(env, learner, max_episodes=1000, max_steps=200, batch_size=3
 
         # Training step
         if episode + 1 >= batch_size:
-            loss, target_reward = learner.update(batch_size)
+            loss, target_reward, env_reward, strategy_reward = learner.update(batch_size)
 
         # Save model periodically
         if episode % save_interval == 0:
             learner.save_model(f"{model_path}_episode_{episode}")
             
-        print(f"Episode {episode}: Reward = {episode_reward/n_agents:.2f}, TR = {np.round(target_reward,2) if target_reward else 'N/A'}, Loss = {loss if loss else 'N/A'}")
+        print(f"Episode {episode}: Reward = {episode_reward/n_agents:.2f}, TR = {np.round(target_reward,2) if target_reward else 'N/A'}, ER = {np.round(env_reward,2) if env_reward else 'N/A'}, SR = {np.round(strategy_reward,2) if strategy_reward else 'N/A'}, Loss = {loss if loss else 'N/A'}")
     
     # Save final model
     learner.save_model(model_path)
