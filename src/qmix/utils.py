@@ -29,11 +29,7 @@ def get_agent_states(env, agent):
     Returns:
         observation, reward, termination, truncation, info for the agent
     """
-    try:
-        observation, reward, termination, truncation, info = env.observe(agent), env._cumulative_rewards[agent], env.terminations[agent], env.truncations[agent], env.infos[agent]
-    except Exception as e:
-        print(f"Error: {agent} - {e}")
-        print(env.agents)
+    observation, reward, termination, truncation, info = env.observe(agent), env._cumulative_rewards[agent], env.terminations[agent], env.truncations[agent], env.infos[agent]
     
     return observation, reward, termination, truncation, info
 
@@ -64,10 +60,11 @@ def get_all_states(env, dead_agents):
     """
     observations, rewards, terminations, truncations, infos = [], [], [], [], []
     for agent in blue_agents:
-        if agent in dead_agents:
-            observation, reward, termination, truncation, info = get_padding_states(env, agent)
-        else:
+        try:
             observation, reward, termination, truncation, info = get_agent_states(env, agent)
+        except Exception:
+            dead_agents.append(agent)
+            observation, reward, termination, truncation, info = get_padding_states(env, agent)
 
         observations.append(observation)
         rewards.append(reward)
