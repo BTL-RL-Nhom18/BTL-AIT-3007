@@ -315,7 +315,7 @@ class QMix_Trainer():
     def update(self, batch_size):
         current_loss = 100
         total_epoch = 0
-        num_epoch = 100
+        num_epoch = 10
         # 1. Lấy batch từ replay buffer
         hidden_in, hidden_out, observation, state, next_state, action, reward, next_observation = self.replay_buffer.sample(
             batch_size)
@@ -360,7 +360,7 @@ class QMix_Trainer():
                 
                 current_loss = loss.item()
             
-                if epoch % 100 == 0:
+                if epoch % 10 == 0:
                     print(f'Epoch {epoch}/{total_epoch+1}, Loss: {current_loss}')
             self.update_cnt += 1
             if self.update_cnt % self.target_update_interval == 0:

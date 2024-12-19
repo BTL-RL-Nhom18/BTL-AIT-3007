@@ -200,7 +200,7 @@ class RNN_Trainer():
     def update(self, batch_size):
         current_loss = 100
         total_epoch = 0
-        num_epoch = 100
+        num_epoch = 10
 
         hidden_in, hidden_out, observation, action, reward, next_observation = self.replay_buffer.sample(batch_size)
 
@@ -232,7 +232,7 @@ class RNN_Trainer():
                 
                 current_loss = loss.item()
             
-                if epoch % 100 == 0:
+                if epoch % 10 == 0:
                     print(f'Epoch {epoch}/{total_epoch+1}, Loss: {current_loss}')
 
             self.update_cnt += 1
