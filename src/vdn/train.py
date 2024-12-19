@@ -33,7 +33,7 @@ def train(q, q_target, memory, optimizer, gamma, batch_size, update_iter=10, chu
         
         loss = 0
         for step_i in range(chunk_size):
-            with autocast():
+            with autocast(device_type=device.type):
                 q_out, hidden = q(states[:, step_i].to(device), hidden)  # [batch_size, num_agents, n_actions]
                 q_out = q_out.to(device)
                 hidden = hidden.to(device)
