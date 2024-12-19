@@ -13,7 +13,6 @@ from src.qmix.qmix import QMix_Trainer, ReplayBuffer
 from src.cnn import CNNFeatureExtractor
 from src.qmix.utils import get_all_states, make_action
 from src.torch_model import QNetwork
-from src.rnn_agent.rnn_agent import RNN_Trainer, ReplayBufferGRU
 
 # Thêm đoạn parse arguments trước khi định nghĩa các biến
 parser = argparse.ArgumentParser(description='Train QMIX agents')

@@ -100,8 +100,6 @@ def train_blue_qmix(env, learner, max_episodes=1000, max_steps=200, batch_size=3
     """
     learner.agent.train()
     learner.target_agent.train()
-    # learner.mixer.train()
-    # learner.target_mixer.train()
     loss = None
     for episode in range(max_episodes):
         print(f"Start episode {episode} ----------------------")
