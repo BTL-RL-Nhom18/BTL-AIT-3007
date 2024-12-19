@@ -8,16 +8,23 @@ In this final project, you will develop and train a reinforcement learning (RL) 
 
 Your agent's performance should be evaluated based on reward and win rate against each of these models. You should control *blue* agents when evaluating.
 
-
+# Result
+My agent vs Random
 <p align="center">
-  <img src="assets/random.gif" width="300" alt="random agent" />
-  <img src="assets/pretrained.gif" width="300" alt="My agent vs random agent" />
+  <img src="assets/vs_random.gif" width="300" alt="My agent vs random agent" />
 </p>
 
+My agent vs Red.pt agent
 <p align="center">
-<img src="assets/blueselfplay.gif" width="300" alt="My agent vs red.pt agent" />
-  <img src="assets/redselfplay.gif" width="300" alt="My agent vs final red agent" />
+  <img src="assets/vs_redpt.gif" width="300" alt="My agent vs red.pt agent" />
 </p>
+
+My agent vs Final Red Agent
+<p align="center">
+  <img src="assets/vs_final_red.gif" width="300" alt="My agent vs final red agent" />
+</p>
+
+<h2 align="center">GGWP <3</h2>
 
 Checkout a [Colab notebook](https://colab.research.google.com/drive/1qmx_NCmzPlc-atWqexn2WueqMKB_ZTxc?usp=sharing) for running this demo.
 

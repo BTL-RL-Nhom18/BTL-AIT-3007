@@ -159,7 +159,7 @@ class RNNAgent(nn.Module):
 class RNN_Trainer():
     def __init__(self, replay_buffer=None, n_agents=81, obs_dim=300, action_shape=1, action_dim=21, hidden_dim=64, 
                  target_update_interval=10, lr=5e-4, epsilon_start=1.0, epsilon_end=0.05, 
-                 epsilon_decay=0.995, lambda_reward=1):
+                 epsilon_decay=0.995):
         self.replay_buffer = replay_buffer
         self.action_dim = action_dim
         self.action_shape = action_shape
@@ -168,7 +168,6 @@ class RNN_Trainer():
         self.epsilon = epsilon_start
         self.epsilon_end = epsilon_end
         self.epsilon_decay = epsilon_decay
-        self.lambda_reward = lambda_reward
         
         # Khởi tạo agent chính và target agent
         self.agent = RNNAgent(obs_dim, action_shape, action_dim, hidden_dim, self.epsilon).to(device)
@@ -245,7 +244,7 @@ class RNN_Trainer():
         self.epsilon = max(self.epsilon_end, self.epsilon * self.epsilon_decay)
         self.agent.epsilon = self.epsilon
 
-        return current_loss, None, None, None
+        return current_loss
     
     def _build_td0_targets(self, rewards, target_qs, gamma=0.99):
         """

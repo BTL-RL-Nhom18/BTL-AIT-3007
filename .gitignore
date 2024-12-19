@@ -21,13 +21,11 @@ docs/environments/*.md
 
 venv
 test.ipynb
-video/
 MARLlib/
 blue*.pt
 deep-marl-toolkit-main
 scripts
 model
-video
 final/.vscode/launch.json
 .vscode/launch.json
 rl-agent-training (1).ipynb

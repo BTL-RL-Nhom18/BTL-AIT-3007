@@ -5,9 +5,9 @@ import torch
 import cv2
 import argparse
 from magent2.environments import battle_v4
-from src.qmix.qmix import QMix_Trainer, ReplayBuffer, CNNFeatureExtractor
+from src.qmix.qmix import ReplayBuffer, CNNFeatureExtractor
 from src.rnn_agent.rnn_agent import RNN_Trainer
-from torch_model import QNetwork
+from src.torch_model import QNetwork
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

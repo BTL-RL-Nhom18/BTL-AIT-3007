@@ -9,9 +9,8 @@ import os
 # Thêm thư mục gốc của project vào PYTHONPATH
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from src.qmix.qmix import QMix_Trainer, ReplayBuffer
 from src.cnn import CNNFeatureExtractor
-from src.qmix.utils import get_all_states, make_action
+from src.rnn_agent.utils import get_all_states, make_action
 from src.torch_model import QNetwork
 from src.rnn_agent.rnn_agent import RNN_Trainer, ReplayBufferGRU
 
@@ -27,7 +26,7 @@ parser.add_argument('--epsilon_end', type=float, default=0.05, help='Minimum eps
 parser.add_argument('--epsilon_decay', type=float, default=0.985, help='Epsilon decay rate')
 parser.add_argument('--seed', type=int, default=42, help='random seed')
 parser.add_argument('--checkpoint', type=str, default=None, help='Path to checkpoint')
-parser.add_argument('--model_path', type=str, default='model/qmix', help='Path to save model')
+parser.add_argument('--model_path', type=str, default='model/rnn', help='Path to save model')
 parser.add_argument('--red_pretrained', action='store_true', help='Use red.pt pretrained model')
 parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate for optimizer')
 
@@ -56,16 +55,14 @@ action_dim = env.action_space("blue_0").n
 action_shape = 1
 n_agents = len(env.agents)//2
 
-replay_buffer = ReplayBuffer(replay_buffer_size)
-learner = QMix_Trainer(
+replay_buffer = ReplayBufferGRU(replay_buffer_size)
+learner = RNN_Trainer(
     replay_buffer=replay_buffer,
     n_agents=n_agents,
     obs_dim=obs_dim,
-    state_dim=state_dim,
     action_shape=action_shape,
     action_dim=action_dim,
     hidden_dim=hidden_dim,
-    hypernet_dim=hypernet_dim,
     target_update_interval=target_update_interval,
     lr=args.learning_rate,
     epsilon_start=args.epsilon_start,
@@ -103,9 +100,9 @@ def train_blue_qmix(env, learner, max_episodes=1000, max_steps=200, batch_size=3
     """
     learner.agent.train()
     learner.target_agent.train()
-    learner.mixer.train()
-    learner.target_mixer.train()
-    loss, target_reward = None, None
+    # learner.mixer.train()
+    # learner.target_mixer.train()
+    loss = None
     for episode in range(max_episodes):
         print(f"Start episode {episode} ----------------------")
         env.reset()
@@ -120,8 +117,6 @@ def train_blue_qmix(env, learner, max_episodes=1000, max_steps=200, batch_size=3
         
         # Lists to store episode data
         episode_observations = []
-        episode_states = []
-        episode_next_states = []
         episode_actions = []
         episode_rewards = []
         episode_next_observations = []
@@ -137,7 +132,7 @@ def train_blue_qmix(env, learner, max_episodes=1000, max_steps=200, batch_size=3
                 print("Environment truncated!!!")
                 break
             # Get all blue agents states and rewards
-            observations, state, rewards, terminations, truncations, infos = get_all_states(env, dead_agents)
+            observations, rewards, terminations, truncations, infos = get_all_states(env, dead_agents)
             if len(observations) == 0:  # No blue agents alive
                 break
             observations = np.stack(observations) # [n_agents, obs_dim]
@@ -148,7 +143,7 @@ def train_blue_qmix(env, learner, max_episodes=1000, max_steps=200, batch_size=3
             # Execute actions and collect next states/rewards
             # Save dead agents after making actions
             dead_agents = make_action(actions, env, dead_agents, red_agent)
-            next_observations, next_state, rewards, terminations, truncations, infos = get_all_states(env, dead_agents)
+            next_observations, rewards, terminations, truncations, infos = get_all_states(env, dead_agents)
             if len(next_observations) == 0:  # No blue agents alive
                 break
             next_observations = np.stack(next_observations) # [n_agents, obs_dim]
@@ -160,29 +155,17 @@ def train_blue_qmix(env, learner, max_episodes=1000, max_steps=200, batch_size=3
             
             # Store transition
             episode_observations.append(observations)
-            episode_states.append(state)
-            episode_next_states.append(next_state)
             episode_actions.append(actions)
             episode_rewards.append(rewards)
             episode_next_observations.append(next_observations)
             
             episode_reward += rewards.sum()
-            
-        # print(np.stack(episode_states).shape) #(1000, 81, 845)
-        # print(np.stack(episode_actions).shape) #(1000, 81, 1)
-        # print(np.stack(episode_rewards).shape) #(1000, 81)
-        # print(np.stack(episode_next_states).shape) #(1000, 81, 845)
-
-        # Push entire episode to replay buffer
-        episode_states = np.stack(episode_states)
-        episode_next_states = np.stack(episode_next_states)
+        
         if len(episode_observations) > 0:
             learner.push_replay_buffer(
                 ini_hidden_in=ini_hidden_in,
                 ini_hidden_out=ini_hidden_out,
                 episode_observation=episode_observations,
-                episode_state=episode_states,
-                episode_next_state=episode_next_states,
                 episode_action=episode_actions,
                 episode_reward=episode_rewards,
                 episode_next_observation=episode_next_observations
@@ -195,13 +178,13 @@ def train_blue_qmix(env, learner, max_episodes=1000, max_steps=200, batch_size=3
 
         # Training step
         if episode + 1 >= batch_size:
-            loss, target_reward = learner.update(batch_size)
+            loss = learner.update(batch_size)
 
         # Save model periodically
         if episode % save_interval == 0:
             learner.save_model(f"{model_path}_episode_{episode}")
             
-        print(f"Episode {episode}: Reward = {episode_reward/n_agents:.2f}, TR = {np.round(target_reward,2) if target_reward else 'N/A'}, Loss = {loss if loss else 'N/A'}")
+        print(f"Episode {episode}: Reward = {episode_reward/n_agents:.2f}, Loss = {loss if loss else 'N/A'}")
     
     # Save final model
     learner.save_model(model_path)
