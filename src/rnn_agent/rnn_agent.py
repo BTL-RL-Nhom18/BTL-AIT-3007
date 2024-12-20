@@ -200,7 +200,7 @@ class RNN_Trainer():
     def update(self, batch_size):
         current_loss = 100
         total_epoch = 0
-        num_epoch = 10
+        num_epoch = 100
 
         hidden_in, hidden_out, observation, action, reward, next_observation = self.replay_buffer.sample(batch_size)
 
@@ -210,20 +210,19 @@ class RNN_Trainer():
         action = torch.LongTensor(np.array(action)).to(device)
         reward = torch.FloatTensor(np.array(reward)).unsqueeze(-1).to(device)
 
+        # Tính target Q values
+        target_agent_outs, _ = self.target_agent(next_observation, hidden_out)
+        target_max_qvals = target_agent_outs.max(dim=-1)[0]
+        # Tính reward và targets
+        targets = self._build_td0_targets(reward, target_max_qvals)
+        # Vòng lặp huấn luyện đảm bảo model fit trước khi chuyển sang episode tiếp theo
         while(current_loss > 0.1 and total_epoch < 10):
             for epoch in range(1, num_epoch + 1):
                 # Tính current Q values
                 agent_outs, _ = self.agent(observation, hidden_in)
                 chosen_action_qvals = torch.gather(
                     agent_outs, dim=-1, index=action.unsqueeze(-1)).squeeze(-1)
-
-                # Tính target Q values
-                target_agent_outs, _ = self.target_agent(next_observation, hidden_out)
-                target_max_qvals = target_agent_outs.max(dim=-1)[0]
-
-                # Tính reward và targets
-                targets = self._build_td0_targets(reward, target_max_qvals)
-
+                
                 # Tính loss và update
                 loss = self.criterion(chosen_action_qvals, targets.detach())
                 self.optimizer.zero_grad()
