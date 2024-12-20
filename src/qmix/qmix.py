@@ -231,7 +231,7 @@ class QMix_Trainer():
                 
                 current_loss = loss.item()
             
-                if epoch % 10 == 0:
+                if epoch % 100 == 0:
                     print(f'Epoch {epoch}/{total_epoch+1}, Loss: {current_loss}')
             self.update_cnt += 1
             if self.update_cnt % self.target_update_interval == 0:
