@@ -233,10 +233,11 @@ class QMix_Trainer():
             
                 if epoch % 100 == 0:
                     print(f'Epoch {epoch}/{total_epoch+1}, Loss: {current_loss}')
-            self.update_cnt += 1
-            if self.update_cnt % self.target_update_interval == 0:
-                self._update_targets()
             total_epoch += 1
+        
+        self.update_cnt += 1
+        if self.update_cnt % self.target_update_interval == 0:
+            self._update_targets()
         # Decay epsilon after each update
         self.epsilon = max(self.epsilon_end, self.epsilon * self.epsilon_decay)
         self.agent.epsilon = self.epsilon
