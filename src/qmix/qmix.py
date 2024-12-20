@@ -158,14 +158,6 @@ class QMix_Trainer():
             lr=lr,
             weight_decay=0.001)
 
-    def sample_action(self):
-        probs = torch.FloatTensor(
-            np.ones(self.action_dim)/self.action_dim).to(device)
-        dist = Categorical(probs)
-        action = dist.sample((self.n_agents, self.action_shape))
-
-        return action.type(torch.FloatTensor).numpy()
-
     def get_action(self, state, hidden_in):
         '''
         @return:
