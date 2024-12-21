@@ -4,21 +4,21 @@ Reinforcement Learning project using the MAgent2 framework - Group 18
 
 ## 🎬 Demo Battles
 
-Watch our trained AI agents compete against different opponents:
+Watch our best AI agents compete against different opponents:
 
-### 🆚 vs Random Agent
+### 🆚 Random Agent
 
 <p align="center">
  <img src="assets/vs_random.gif" width="300" alt="Our agent vs random agent" />
 </p>
 
-### 🆚 vs Red.pt Agent  
+### 🆚 Red.pt Agent  
 
 <p align="center">
  <img src="assets/vs_redpt.gif" width="300" alt="Our agent vs red.pt agent" />
 </p>
 
-### 🆚 vs Final Red Agent
+### 🆚 Final Red Agent
 
 <p align="center">
  <img src="assets/vs_final_red.gif" width="300" alt="Our agent vs final red agent" />
@@ -41,10 +41,10 @@ pip install -r requirements.txt
 ### Training
 - Open `train.ipynb` for the training pipeline of best model
 - Training logs available in `src/`
-- Model checkpoints  in `weight_models`
 ### Evaluation
 - Use `eval.ipynb` to evaluate best models
 - Detailed evaluation metrics and results in `src/`
+- Model checkpoints  in `weight_models`
 ## 🔍 Project Structure
 ```
 .
