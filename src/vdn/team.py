@@ -41,6 +41,9 @@ class TeamManager:
     def get_my_agents(self):
         return self.get_team_agents(self.get_my_team())
 
+    def get_other_agents(self):
+        return self.get_team_agents(self.get_other_team())
+
     def group_agents(self):
         """
         Group agents by their team.
