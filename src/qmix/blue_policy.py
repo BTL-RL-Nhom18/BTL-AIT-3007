@@ -1,8 +1,8 @@
 import torch
 
 from magent2.environments import battle_v4
-from src.qmix.qmix import CNNFeatureExtractor
-from src.rnn_agent.rnn_agent import RNN_Trainer
+from src.cnn import CNNFeatureExtractor
+from src.qmix.qmix import QMix_Trainer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -21,13 +21,17 @@ def get_blue_policy(model_path, hidden_dim=64):
     action_dim = dummy_env.action_space("blue_0").n
     action_shape = 1
     n_agents = len(dummy_env.agents)//2
+    hidden_dim = 64
+    hypernet_dim = 128
     
-    learner = RNN_Trainer(
+    learner = QMix_Trainer(
         n_agents=n_agents,
         obs_dim=obs_dim,
+        state_dim=state_dim,
         action_shape=action_shape,
         action_dim=action_dim,
         hidden_dim=hidden_dim,
+        hypernet_dim=hypernet_dim,
         target_update_interval=10,
         epsilon_start=0.0,
         epsilon_end=0.0,

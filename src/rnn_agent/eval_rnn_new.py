@@ -1,6 +1,3 @@
-from magent2.environments import battle_v4
-from torch_model import QNetwork
-from final_torch_model import QNetwork as FinalQNetwork
 import torch
 import numpy as np
 import argparse
@@ -10,9 +7,16 @@ try:
 except ImportError:
     tqdm = lambda x, *args, **kwargs: x  # Fallback: tqdm becomes a no-op
 
-from src.qmix.blue_policy import get_blue_policy
+import sys
+import os
+# Thêm thư mục gốc của project vào PYTHONPATH
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+from src.rnn_agent.blue_policy import get_blue_policy
+from magent2.environments import battle_v4
+from src.torch_model import QNetwork
+from src.final_torch_model import QNetwork as FinalQNetwork
 
-def eval(args):
+def eval():
     max_cycles = 300
     env = battle_v4.env(map_size=45, max_cycles=max_cycles)
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -24,7 +28,7 @@ def eval(args):
         env.observation_space("red_0").shape, env.action_space("red_0").n
     )
     q_network.load_state_dict(
-        torch.load("red.pt", weights_only=True, map_location="cpu")
+        torch.load("../../weight_models/red.pt", weights_only=True, map_location="cpu")
     )
     q_network.to(device)
 
@@ -32,12 +36,13 @@ def eval(args):
         env.observation_space("red_0").shape, env.action_space("red_0").n
     )
     final_q_network.load_state_dict(
-        torch.load("red_final.pt", weights_only=True, map_location="cpu")
+        torch.load("../../weight_models/red_final.pt", weights_only=True, map_location="cpu")
     )
     final_q_network.to(device)
     
     # Load blue agent
-    blue_policy = get_blue_policy(args.model_path)
+    blue_policy = get_blue_policy("../../weight_models/rnn")
+
 
     def pretrain_policy(env, agent, obs):
         observation = (
@@ -106,7 +111,7 @@ def eval(args):
     print("Eval with random policy")
     print(
         run_eval(
-            env=env, red_policy=random_policy, blue_policy=blue_policy, n_episode=1
+            env=env, red_policy=random_policy, blue_policy=blue_policy, n_episode=30
         )
     )
     print("=" * 20)
@@ -114,7 +119,7 @@ def eval(args):
     print("Eval with trained policy")
     print(
         run_eval(
-            env=env, red_policy=pretrain_policy, blue_policy=blue_policy, n_episode=1
+            env=env, red_policy=pretrain_policy, blue_policy=blue_policy, n_episode=30
         )
     )
     print("=" * 20)
@@ -125,15 +130,11 @@ def eval(args):
             env=env,
             red_policy=final_pretrain_policy,
             blue_policy=blue_policy,
-            n_episode=1,
+            n_episode=30,
         )
     )
     print("=" * 20)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Evaluate QMIX agents')
-    parser.add_argument('--model_path', type=str, default='model/qmix', help='path to model')
-    
-    args = parser.parse_args()
-    eval(args)
+    eval()

@@ -127,7 +127,7 @@ class QMix(nn.Module):
         return q_tot
 
 class QMix_Trainer():
-    def __init__(self, replay_buffer, n_agents, obs_dim, state_dim, action_shape, action_dim, hidden_dim, hypernet_dim, target_update_interval, lr=5e-4, epsilon_start=1.0, epsilon_end=0.05, epsilon_decay=0.995):
+    def __init__(self, replay_buffer=None, n_agents=81, obs_dim=300, state_dim=405, action_shape=1, action_dim=21, hidden_dim=64, hypernet_dim=128, target_update_interval=10, lr=5e-4, epsilon_start=1.0, epsilon_end=0.05, epsilon_decay=0.995):
         self.replay_buffer = replay_buffer
 
         self.action_dim = action_dim
