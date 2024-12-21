@@ -6,14 +6,11 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.distributions import Categorical
 import random
-from os import path
-import pickle
-import argparse
 import os
 
-from src.qmix.rewards import _calc_reward
-from src.rnn_agent.rnn_agent import RNNAgent, ReplayBufferGRU
+from rewards import _calc_reward
 from src.cnn import CNNFeatureExtractor
+from src.rnn_agent.rnn_agent import ReplayBufferGRU, RNNAgent
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
@@ -130,7 +127,7 @@ class QMix(nn.Module):
         return q_tot
 
 class QMix_Trainer():
-    def __init__(self, replay_buffer, n_agents, obs_dim, state_dim, action_shape, action_dim, hidden_dim, hypernet_dim, target_update_interval, lr=5e-4, epsilon_start=1.0, epsilon_end=0.05, epsilon_decay=0.995):
+    def __init__(self, replay_buffer=None, n_agents=81, obs_dim=300, state_dim=405, action_shape=1, action_dim=21, hidden_dim=64, hypernet_dim=128, target_update_interval=10, lr=5e-4, epsilon_start=1.0, epsilon_end=0.05, epsilon_decay=0.995):
         self.replay_buffer = replay_buffer
 
         self.action_dim = action_dim
@@ -160,14 +157,6 @@ class QMix_Trainer():
             list(self.agent.parameters())+list(self.mixer.parameters()), 
             lr=lr,
             weight_decay=0.001)
-
-    def sample_action(self):
-        probs = torch.FloatTensor(
-            np.ones(self.action_dim)/self.action_dim).to(device)
-        dist = Categorical(probs)
-        action = dist.sample((self.n_agents, self.action_shape))
-
-        return action.type(torch.FloatTensor).numpy()
 
     def get_action(self, state, hidden_in):
         '''
@@ -210,6 +199,14 @@ class QMix_Trainer():
         action = torch.LongTensor(action).to(device) # [#batch, sequence, #agents, #action_shape]
         reward = torch.FloatTensor(reward).unsqueeze(-1).to(device) # reward is scalar, add 1 dim to be [reward] at the same dim
 
+        # 3. Tính target Q values
+        target_agent_outs, _ = self.target_agent(next_observation, hidden_out)
+        target_max_qvals = target_agent_outs.max(dim=-1, keepdim=True)[0] # [#batch, #sequence, #agents, action_shape]
+        target_qtot = self.target_mixer(target_max_qvals, next_state)
+        # 4. Tính reward và targets
+        reward_epoch = _calc_reward(reward)
+        targets = self._build_td0_targets(reward_epoch, target_qtot)
+        # Vòng lặp huấn luyện đảm bảo model fit trước khi chuyển sang episode tiếp theo
         while(current_loss > 0.1 and total_epoch < 10):
             for epoch in range(1, num_epoch + 1):
                 # 2. Tính current Q values
@@ -217,15 +214,6 @@ class QMix_Trainer():
                 chosen_action_qvals = torch.gather(  # [#batch, #sequence, #agent, action_shape]
                     agent_outs, dim=-1, index=action.unsqueeze(-1)).squeeze(-1)
                 qtot = self.mixer(chosen_action_qvals, state) # [#batch, #sequence, 1]
-
-                # 3. Tính target Q values
-                target_agent_outs, _ = self.target_agent(next_observation, hidden_out)
-                target_max_qvals = target_agent_outs.max(dim=-1, keepdim=True)[0] # [#batch, #sequence, #agents, action_shape]
-                target_qtot = self.target_mixer(target_max_qvals, next_state)
-
-                # 4. Tính reward và targets
-                reward_epoch = _calc_reward(reward)
-                targets = self._build_td0_targets(reward_epoch, target_qtot)
 
                 # 5. Tính loss và update
                 loss = self.criterion(qtot, targets.detach())
@@ -237,10 +225,11 @@ class QMix_Trainer():
             
                 if epoch % 100 == 0:
                     print(f'Epoch {epoch}/{total_epoch+1}, Loss: {current_loss}')
-            self.update_cnt += 1
-            if self.update_cnt % self.target_update_interval == 0:
-                self._update_targets()
             total_epoch += 1
+        
+        self.update_cnt += 1
+        if self.update_cnt % self.target_update_interval == 0:
+            self._update_targets()
         # Decay epsilon after each update
         self.epsilon = max(self.epsilon_end, self.epsilon * self.epsilon_decay)
         self.agent.epsilon = self.epsilon

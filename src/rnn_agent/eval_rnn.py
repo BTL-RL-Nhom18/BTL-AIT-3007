@@ -5,8 +5,13 @@ import torch
 import cv2
 import argparse
 from magent2.environments import battle_v4
-from src.qmix.qmix import ReplayBuffer, CNNFeatureExtractor
-from src.rnn_agent.rnn_agent import RNN_Trainer
+
+import sys
+import os
+# Thêm thư mục gốc của project vào PYTHONPATH
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+from src.cnn import CNNFeatureExtractor
+from src.rnn_agent.rnn_agent import RNN_Trainer, ReplayBufferGRU as ReplayBuffer
 from src.torch_model import QNetwork
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -162,7 +167,7 @@ def evaluate(env, blue_policy, red_policy, n_episodes=100, max_cycles=1000, save
             height, width, _ = frames[0].shape
             timestamp = time.strftime("%Y%m%d_%H%M%S")
             out = cv2.VideoWriter(
-                os.path.join(vid_dir, f"qmix_eval_{timestamp}.mp4"),
+                os.path.join(vid_dir, f"rnn_eval_{timestamp}.mp4"),
                 cv2.VideoWriter_fourcc(*"mp4v"), 
                 fps,
                 (width, height),
@@ -201,7 +206,7 @@ if __name__ == "__main__":
         env.observation_space("red_0").shape, env.action_space("red_0").n
     )
     q_network.load_state_dict(
-        torch.load("red.pt", weights_only=True, map_location="cpu")
+        torch.load("../../weight_models/red.pt", weights_only=True, map_location="cpu")
     )
     q_network.to(device)
     

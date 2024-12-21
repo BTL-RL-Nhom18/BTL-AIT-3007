@@ -5,6 +5,11 @@ import torch
 import cv2
 import argparse
 from magent2.environments import battle_v4
+
+import sys
+import os
+# Thêm thư mục gốc của project vào PYTHONPATH
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 from src.qmix.qmix import QMix_Trainer, ReplayBuffer, CNNFeatureExtractor
 from src.torch_model import QNetwork
 
@@ -202,7 +207,7 @@ if __name__ == "__main__":
         env.observation_space("red_0").shape, env.action_space("red_0").n
     )
     q_network.load_state_dict(
-        torch.load("red.pt", weights_only=True, map_location="cpu")
+        torch.load("../../weight_models/red.pt", weights_only=True, map_location="cpu")
     )
     q_network.to(device)
     

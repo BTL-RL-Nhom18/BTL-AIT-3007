@@ -112,7 +112,7 @@ def evaluate(env, blue_policy, red_policy, n_episodes=100, max_cycles=1000, save
             height, width, _ = frames[0].shape
             timestamp = time.strftime("%Y%m%d_%H%M%S")
             out = cv2.VideoWriter(
-                os.path.join(vid_dir, f"qmix_eval_{timestamp}.mp4"),
+                os.path.join(vid_dir, f"rule_eval_{timestamp}.mp4"),
                 cv2.VideoWriter_fourcc(*"mp4v"), 
                 fps,
                 (width, height),
@@ -133,7 +133,6 @@ def evaluate(env, blue_policy, red_policy, n_episodes=100, max_cycles=1000, save
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Evaluate QMIX agents')
-    parser.add_argument('--model_path', type=str, default='model/qmix', help='path to model')
     parser.add_argument('--n_episodes', type=int, default=1, help='number of episodes')
     parser.add_argument('--max_cycles', type=int, default=300, help='max cycles per episode')
     parser.add_argument('--render', action='store_true', help='render the environment')

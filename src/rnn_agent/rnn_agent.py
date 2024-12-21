@@ -78,7 +78,7 @@ class RNNAgent(nn.Module):
         
         self.feature_extractor = CNNFeatureExtractor()
 
-        self.linear1 = nn.Linear(obs_dim, hidden_size) #80+21 -> 64
+        self.linear1 = nn.Linear(obs_dim, hidden_size) #80 -> 64
         self.linear2 = nn.Linear(hidden_size, hidden_size)  #64 -> 64
         self.rnn = nn.GRU(hidden_size, hidden_size) #64 -> 64
         self.linear3 = nn.Linear(hidden_size, hidden_size) #64 -> 64
@@ -210,20 +210,19 @@ class RNN_Trainer():
         action = torch.LongTensor(np.array(action)).to(device)
         reward = torch.FloatTensor(np.array(reward)).unsqueeze(-1).to(device)
 
+        # Tính target Q values
+        target_agent_outs, _ = self.target_agent(next_observation, hidden_out)
+        target_max_qvals = target_agent_outs.max(dim=-1)[0]
+        # Tính reward và targets
+        targets = self._build_td0_targets(reward, target_max_qvals)
+        # Vòng lặp huấn luyện đảm bảo model fit trước khi chuyển sang episode tiếp theo
         while(current_loss > 0.1 and total_epoch < 10):
             for epoch in range(1, num_epoch + 1):
                 # Tính current Q values
                 agent_outs, _ = self.agent(observation, hidden_in)
                 chosen_action_qvals = torch.gather(
                     agent_outs, dim=-1, index=action.unsqueeze(-1)).squeeze(-1)
-
-                # Tính target Q values
-                target_agent_outs, _ = self.target_agent(next_observation, hidden_out)
-                target_max_qvals = target_agent_outs.max(dim=-1)[0]
-
-                # Tính reward và targets
-                targets = self._build_td0_targets(reward, target_max_qvals)
-
+                
                 # Tính loss và update
                 loss = self.criterion(chosen_action_qvals, targets.detach())
                 self.optimizer.zero_grad()
@@ -235,11 +234,11 @@ class RNN_Trainer():
                 if epoch % 100 == 0:
                     print(f'Epoch {epoch}/{total_epoch+1}, Loss: {current_loss}')
 
-            self.update_cnt += 1
-            if self.update_cnt % self.target_update_interval == 0:
-                self._update_targets()
             total_epoch += 1
-
+        
+        self.update_cnt += 1
+        if self.update_cnt % self.target_update_interval == 0:
+            self._update_targets()
         # Decay epsilon
         self.epsilon = max(self.epsilon_end, self.epsilon * self.epsilon_decay)
         self.agent.epsilon = self.epsilon
