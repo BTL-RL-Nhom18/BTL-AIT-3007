@@ -111,7 +111,7 @@ def eval():
     print("Eval with random policy")
     print(
         run_eval(
-            env=env, red_policy=random_policy, blue_policy=blue_policy, n_episode=1
+            env=env, red_policy=random_policy, blue_policy=blue_policy, n_episode=30
         )
     )
     print("=" * 20)
@@ -119,7 +119,7 @@ def eval():
     print("Eval with trained policy")
     print(
         run_eval(
-            env=env, red_policy=pretrain_policy, blue_policy=blue_policy, n_episode=1
+            env=env, red_policy=pretrain_policy, blue_policy=blue_policy, n_episode=30
         )
     )
     print("=" * 20)
@@ -130,7 +130,7 @@ def eval():
             env=env,
             red_policy=final_pretrain_policy,
             blue_policy=blue_policy,
-            n_episode=1,
+            n_episode=30,
         )
     )
     print("=" * 20)
