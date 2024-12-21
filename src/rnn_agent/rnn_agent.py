@@ -78,7 +78,7 @@ class RNNAgent(nn.Module):
         
         self.feature_extractor = CNNFeatureExtractor()
 
-        self.linear1 = nn.Linear(obs_dim, hidden_size) #80+21 -> 64
+        self.linear1 = nn.Linear(obs_dim, hidden_size) #80 -> 64
         self.linear2 = nn.Linear(hidden_size, hidden_size)  #64 -> 64
         self.rnn = nn.GRU(hidden_size, hidden_size) #64 -> 64
         self.linear3 = nn.Linear(hidden_size, hidden_size) #64 -> 64
