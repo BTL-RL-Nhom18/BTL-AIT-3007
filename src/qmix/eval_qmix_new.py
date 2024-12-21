@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 import argparse
+import gc
 
 try:
     from tqdm import tqdm
@@ -39,10 +40,6 @@ def eval():
         torch.load("../../weight_models/red_final.pt", weights_only=True, map_location="cpu")
     )
     final_q_network.to(device)
-    
-    # Load blue agent
-    blue_policy = get_blue_policy("../../weight_models/qmix")
-
 
     def pretrain_policy(env, agent, obs):
         observation = (
@@ -60,12 +57,13 @@ def eval():
             q_values = final_q_network(observation)
         return torch.argmax(q_values, dim=1).cpu().numpy()[0]
 
-    def run_eval(env, red_policy, blue_policy, n_episode: int = 100):
+    def run_eval(env, red_policy, blue_policy_fn, n_episode: int = 100):
         red_win, blue_win = [], []
         red_tot_rw, blue_tot_rw = [], []
         n_agent_each_team = len(env.env.action_spaces) // 2
 
         for _ in tqdm(range(n_episode)):
+            blue_policy = blue_policy_fn("../../weight_models/qmix")
             env.reset()
             n_kill = {"red": 0, "blue": 0}
             red_reward, blue_reward = 0, 0
@@ -91,6 +89,10 @@ def eval():
                         action = blue_policy(env, agent, observation)
 
                 env.step(action)
+                
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            gc.collect() 
 
             who_wins = "red" if n_kill["red"] >= n_kill["blue"] + 5 else "draw"
             who_wins = "blue" if n_kill["red"] + 5 <= n_kill["blue"] else who_wins
@@ -111,7 +113,7 @@ def eval():
     print("Eval with random policy")
     print(
         run_eval(
-            env=env, red_policy=random_policy, blue_policy=blue_policy, n_episode=30
+            env=env, red_policy=random_policy, blue_policy_fn=get_blue_policy, n_episode=30
         )
     )
     print("=" * 20)
@@ -119,7 +121,7 @@ def eval():
     print("Eval with trained policy")
     print(
         run_eval(
-            env=env, red_policy=pretrain_policy, blue_policy=blue_policy, n_episode=30
+            env=env, red_policy=pretrain_policy, blue_policy_fn=get_blue_policy, n_episode=30
         )
     )
     print("=" * 20)
@@ -129,7 +131,7 @@ def eval():
         run_eval(
             env=env,
             red_policy=final_pretrain_policy,
-            blue_policy=blue_policy,
+            blue_policy_fn=get_blue_policy,
             n_episode=30,
         )
     )
