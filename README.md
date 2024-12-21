@@ -39,23 +39,24 @@ pip install -r requirements.txt
 
 ## 📊 Reproduce Our Results
 ### Training
- Open `train.ipynb` for the training pipeline of best model
- Training logs available in `src/`
- Model checkpoints  in `weight_models`
+- Open `train.ipynb` for the training pipeline of best model
+- Training logs available in `src/`
+- Model checkpoints  in `weight_models`
 ### Evaluation
- Use `eval.ipynb` to evaluate best models
- Detailed evaluation metrics and results in `src/`
+- Use `eval.ipynb` to evaluate best models
+- Detailed evaluation metrics and results in `src/`
 ## 🔍 Project Structure
-``
-── train.ipynb          # Training notebook
-── eval.ipynb           # Evaluation notebook  
-── src/                 # Source code
-   ├── rnn_agent/       # RNN Agent implementation
-   ├── qmix/            # QMIX implementation
-   ├── vdn/             # VDN implementation
-   ├── DQN/             # DQN implementation
-   └── rule_based/      # Rule-based implementation
-``
+```
+.
+├── train.ipynb          # Training notebook
+├── eval.ipynb           # Evaluation notebook  
+├── src/                 # Source code
+    ├── rnn_agent/      # RNN Agent implementation
+    ├── qmix/           # QMIX implementation
+    ├── vdn/            # VDN implementation  
+    ├── DQN/            # DQN implementation
+    └── rule_based/     # Rule-based implementation
+```
 ## 📚 References
 
 1. [MAgent2 GitHub Repository](https://github.com/Farama-Foundation/MAgent2)
