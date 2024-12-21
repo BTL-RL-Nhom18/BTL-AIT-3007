@@ -22,7 +22,6 @@ docs/environments/*.md
 venv
 test.ipynb
 MARLlib/
-blue*.pt
 deep-marl-toolkit-main
 scripts
 model
